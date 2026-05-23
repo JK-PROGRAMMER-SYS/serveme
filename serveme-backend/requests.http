@@ -1,0 +1,30 @@
+### Testar rota raiz
+GET http://localhost:3000/
+
+### Listar usuários
+GET http://localhost:3000/users
+
+### Criar usuário
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "uid": "abc123",
+  "nome": "Bar do Julio",
+  "tipo": "estabelecimento",
+  "documento": "12345678900"
+}
+
+### Criar vaga
+POST http://localhost:3000/jobs
+Content-Type: application/json
+
+{
+  "estabelecimento_id": 1,
+  "funcao": "garçom",
+  "data_hora": "2026-05-23T18:00:00",
+  "valor": 150.00
+}
+
+### Listar vagas
+GET http://localhost:3000/jobs

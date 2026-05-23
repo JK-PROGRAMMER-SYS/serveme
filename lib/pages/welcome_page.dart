@@ -21,8 +21,7 @@ class WelcomePage extends StatelessWidget {
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 10),
-            const Text(
-              'ServeMe',
+            const Text('ServeMe',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,

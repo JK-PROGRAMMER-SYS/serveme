@@ -14,7 +14,7 @@ class ServeMeApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'ServeMe',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.deepPurple, 
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const WelcomePage(), // tela inicial
