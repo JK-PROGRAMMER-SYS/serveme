@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../utils/validators.dart';
 import '../utils/masks.dart';
 import 'login_page.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -18,8 +21,9 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController docController = TextEditingController();
 
   String userType = 'freelancer'; // padrão inicial
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  void _register() {
+  Future<void> _register() async {
     if (nameController.text.isEmpty ||
         emailPhoneController.text.isEmpty ||
         passController.text.isEmpty ||
@@ -44,34 +48,85 @@ class _RegisterPageState extends State<RegisterPage> {
     }
 
     if (passController.text != confirmPassController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('As senhas não coincidem!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('As senhas não coincidem!')));
       return;
     }
 
-    if (userType == 'freelancer' && !Validators.isValidCPF(docController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CPF inválido!')),
-      );
+    if (userType == 'freelancer' &&
+        !Validators.isValidCPF(docController.text)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CPF inválido!')));
       return;
     }
 
-    if (userType == 'estabelecimento' && !Validators.isValidCNPJ(docController.text)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CNPJ inválido!')),
-      );
+    if (userType == 'estabelecimento' &&
+        !Validators.isValidCNPJ(docController.text)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CNPJ inválido!')));
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cadastro realizado com sucesso!')),
-    );
+    try {
+      // Cria usuário no Firebase Auth
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: input,
+            password: passController.text.trim(),
+          );
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginPage()),
-    );
+      String uid = userCredential.user!.uid;
+
+      // Envia dados complementares para o backend
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:3000/users'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "uid": uid,
+          "nome": nameController.text,
+          "tipo": userType,
+          "documento": docController.text,
+          "contato": input,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar no backend: ${response.statusCode}'),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Erro no cadastro';
+      if (e.code == 'email-already-in-use') {
+        message = 'E-mail já cadastrado';
+      } else if (e.code == 'invalid-email') {
+        message = 'E-mail inválido';
+      } else if (e.code == 'weak-password') {
+        message = 'Senha muito fraca';
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
+    }
   }
 
   @override
@@ -122,7 +177,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
-              value: userType,
+              initialValue: userType,
               items: const [
                 DropdownMenuItem(
                   value: 'freelancer',

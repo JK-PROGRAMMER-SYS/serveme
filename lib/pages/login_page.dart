@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/validators.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'menu_page.dart';
 import 'register_page.dart';
 
@@ -14,38 +14,49 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailPhoneController = TextEditingController();
   final TextEditingController passController = TextEditingController();
 
-  void _validateLogin() {
-    String input = emailPhoneController.text.trim();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
-    if (input.isEmpty || passController.text.isEmpty) {
+  Future<void> _validateLogin() async {
+    String input = emailPhoneController.text.trim();
+    String senha = passController.text.trim();
+
+    if (input.isEmpty || senha.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preencha todos os campos!')),
       );
       return;
     }
 
-    // Validação de e-mail ou telefone
-    bool validEmail = Validators.isValidEmail(input);
-    bool validPhone = Validators.isValidPhone(input);
-
-    if (!validEmail && !validPhone) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Digite um e-mail ou telefone válido!')),
+    try {
+      // Login com e-mail
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: input,
+        password: senha,
       );
-      return;
-    }
 
-    // Exemplo simples de login (substituir por backend futuramente)
-    if ((input == 'teste@email.com' || input == '11999999999') &&
-        passController.text == '123') {
-      Navigator.pushReplacement(
+      if (userCredential.user != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const MenuPage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Erro no login';
+      if (e.code == 'user-not-found') {
+        message = 'Usuário não encontrado';
+      } else if (e.code == 'wrong-password') {
+        message = 'Senha incorreta';
+      } else if (e.code == 'invalid-email') {
+        message = 'E-mail inválido';
+      }
+
+      ScaffoldMessenger.of(
         context,
-        MaterialPageRoute(builder: (context) => const MenuPage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login inválido! Verifique seus dados.')),
-      );
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
     }
   }
 
