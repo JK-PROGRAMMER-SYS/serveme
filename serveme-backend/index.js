@@ -21,35 +21,25 @@ app.get('/', (req, res) => {
   res.send('API ServeMe funcionando!');
 });
 
-// Criar usuário (dados complementares após cadastro no Firebase)
+// ---------------- USERS ----------------
 app.post('/users', async (req, res) => {
   const { uid, nome, tipo, documento, contato } = req.body;
-
   try {
-    // Insere dados básicos em users
     const userResult = await pool.query(
       'INSERT INTO users (uid, nome, tipo, contato) VALUES ($1, $2, $3, $4) RETURNING id',
       [uid, nome, tipo, contato]
     );
-
     const userId = userResult.rows[0].id;
 
-    // Se for freelancer → salva CPF
     if (tipo === 'freelancer') {
-      await pool.query(
-        'INSERT INTO freela (user_id, cpf) VALUES ($1, $2)',
-        [userId, documento]
-      );
+      await pool.query('INSERT INTO freela (user_id, cpf) VALUES ($1, $2)', [userId, documento]);
     }
-
-    // Se for estabelecimento → salva CNPJ
     if (tipo === 'estabelecimento') {
       await pool.query(
         'INSERT INTO estab (user_id, cnpj, nome_fantasia) VALUES ($1, $2, $3)',
         [userId, documento, nome]
       );
     }
-
     res.json({ success: true, user_id: userId });
   } catch (err) {
     console.error(err);
@@ -57,7 +47,6 @@ app.post('/users', async (req, res) => {
   }
 });
 
-// Listar usuários
 app.get('/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM users');
@@ -68,7 +57,6 @@ app.get('/users', async (req, res) => {
   }
 });
 
-// Login: valida se UID existe no banco
 app.post('/login', async (req, res) => {
   const { uid } = req.body;
   try {
@@ -84,7 +72,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// Criar vaga
+// ---------------- JOBS ----------------
 app.post('/jobs', async (req, res) => {
   const { estabelecimento_id, funcao, data_hora_inicio, data_hora_fim, valor } = req.body;
   try {
@@ -99,7 +87,6 @@ app.post('/jobs', async (req, res) => {
   }
 });
 
-// Listar vagas
 app.get('/jobs', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM jobs WHERE status = $1', ['aberta']);
@@ -110,7 +97,51 @@ app.get('/jobs', async (req, res) => {
   }
 });
 
-// Criar contrato (freelancer aceita vaga)
+// ---------------- FREELA ----------------
+app.put('/freela/:id', async (req, res) => {
+  const { id } = req.params;
+  const { cpf, experiencia_texto, especialidades, disponibilidade_status } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE freela 
+       SET cpf = $1, experiencia_texto = $2, especialidades = $3, disponibilidade_status = $4
+       WHERE user_id = $5 RETURNING *`,
+      [cpf, experiencia_texto, especialidades, disponibilidade_status, id]
+    );
+    if (result.rows.length > 0) {
+      res.json({ success: true, freela: result.rows[0] });
+    } else {
+      res.status(404).json({ success: false, message: 'Freelancer não encontrado' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao atualizar perfil do freelancer' });
+  }
+});
+
+// ---------------- ESTAB ----------------
+app.put('/estab/:id', async (req, res) => {
+  const { id } = req.params;
+  const { cnpj, endereco_completo, latitude, longitude, nome_fantasia, razao_social } = req.body;
+  try {
+    const result = await pool.query(
+      `UPDATE estab 
+       SET cnpj = $1, endereco_completo = $2, latitude = $3, longitude = $4, nome_fantasia = $5, razao_social = $6
+       WHERE user_id = $7 RETURNING *`,
+      [cnpj, endereco_completo, latitude, longitude, nome_fantasia, razao_social, id]
+    );
+    if (result.rows.length > 0) {
+      res.json({ success: true, estab: result.rows[0] });
+    } else {
+      res.status(404).json({ success: false, message: 'Estabelecimento não encontrado' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao atualizar perfil do estabelecimento' });
+  }
+});
+
+// ---------------- CONTRACTS ----------------
 app.post('/contracts', async (req, res) => {
   const { job_id, freela_id } = req.body;
   try {
@@ -118,10 +149,7 @@ app.post('/contracts', async (req, res) => {
       'INSERT INTO contracts (job_id, freela_id, data_confirmacao, status) VALUES ($1, $2, NOW(), $3) RETURNING *',
       [job_id, freela_id, 'confirmado']
     );
-
-    // Atualiza status da vaga para "fechada"
     await pool.query('UPDATE jobs SET status = $1 WHERE id = $2', ['fechada', job_id]);
-
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -129,7 +157,6 @@ app.post('/contracts', async (req, res) => {
   }
 });
 
-// Listar contratos
 app.get('/contracts', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM contracts');
@@ -140,7 +167,49 @@ app.get('/contracts', async (req, res) => {
   }
 });
 
-// Registrar pagamento
+app.get('/contracts/freela/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.data_confirmacao, c.status,
+              j.funcao, j.data_hora_inicio, j.data_hora_fim,
+              e.nome_fantasia AS estabelecimento_nome
+       FROM contracts c
+       JOIN jobs j ON c.job_id = j.id
+       JOIN estab e ON j.estab_id = e.user_id
+       WHERE c.freela_id = $1
+       ORDER BY c.data_confirmacao DESC`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar contratos do freelancer' });
+  }
+});
+
+app.get('/contracts/estab/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.data_confirmacao, c.status,
+              j.funcao, j.data_hora_inicio, j.data_hora_fim,
+              u.nome AS freelancer_nome
+       FROM contracts c
+       JOIN jobs j ON c.job_id = j.id
+       JOIN users u ON c.freela_id = u.id
+       WHERE j.estab_id = $1
+       ORDER BY c.data_confirmacao DESC`,
+      [id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao buscar contratos do estabelecimento' });
+  }
+});
+
+// ---------------- PAYMENTS ----------------
 app.post('/payments', async (req, res) => {
   const { contract_id, valor_total, valor_freela, taxa_plataforma, metodo } = req.body;
   try {
@@ -155,7 +224,6 @@ app.post('/payments', async (req, res) => {
   }
 });
 
-// Listar pagamentos
 app.get('/payments', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM payments');
@@ -166,7 +234,7 @@ app.get('/payments', async (req, res) => {
   }
 });
 
-// Criar avaliação
+// ---------------- REVIEWS ----------------
 app.post('/reviews', async (req, res) => {
   const { contract_id, avaliador, nota, comentario } = req.body;
   try {
@@ -181,7 +249,6 @@ app.post('/reviews', async (req, res) => {
   }
 });
 
-// Listar avaliações
 app.get('/reviews', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM reviews');
@@ -192,15 +259,12 @@ app.get('/reviews', async (req, res) => {
   }
 });
 
-// Relatório consolidado para um Estabelecimento Parceiro
+// ---------------- DASHBOARD ----------------
 app.get('/dashboard/:estabelecimento_id', async (req, res) => {
   const { estabelecimento_id } = req.params;
 
   try {
-    const jobs = await pool.query(
-      'SELECT COUNT(*) FROM jobs WHERE estab_id = $1',
-      [estabelecimento_id]
-    );
+    const jobs = await pool.query('SELECT COUNT(*) FROM jobs WHERE estab_id = $1', [estabelecimento_id]);
 
     const contracts = await pool.query(
       `SELECT COUNT(*) FROM contracts 
@@ -238,8 +302,7 @@ app.get('/dashboard/:estabelecimento_id', async (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Erro ao gerar relatório' });
   }
-});
-
+});// ---------------- SERVER ----------------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

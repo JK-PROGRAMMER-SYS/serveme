@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "916472307513",
+    "project_id": "serveme-da583",
+    "storage_bucket": "serveme-da583.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:916472307513:android:96dff70cb4708b4e2952e8",
+        "android_client_info": {
+          "package_name": "com.br.serveme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDrr6lZTqxI4an3tZvtDt5uBfnQ9xnZ5rU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 import 'menu_page.dart';
 import 'register_page.dart';
 
@@ -21,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
     String senha = passController.text.trim();
 
     if (input.isEmpty || senha.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preencha todos os campos!')),
       );
@@ -28,19 +32,40 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      // Login com e-mail
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: input,
         password: senha,
       );
 
+      if (!mounted) return;
+
       if (userCredential.user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MenuPage()),
+        // 🔹 Chama o backend para buscar dados do usuário
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:3000/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({"uid": userCredential.user!.uid}),
         );
+
+        if (!mounted) return;
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final user = data['user'];
+          final int userId = user['id'];
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => MenuPage(userId: userId)),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erro ao validar usuário no backend')),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       String message = 'Erro no login';
       if (e.code == 'user-not-found') {
         message = 'Usuário não encontrado';
@@ -54,6 +79,7 @@ class _LoginPageState extends State<LoginPage> {
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));

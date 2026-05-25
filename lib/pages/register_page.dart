@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../utils/validators.dart';
-import '../utils/masks.dart';
-import 'login_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
+
+import 'login_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,115 +13,95 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController emailPhoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController passController = TextEditingController();
-  final TextEditingController confirmPassController = TextEditingController();
-  final TextEditingController docController = TextEditingController();
+  final TextEditingController nomeController = TextEditingController();
+  final TextEditingController contatoController = TextEditingController();
+  final TextEditingController documentoController = TextEditingController();
 
-  String userType = 'freelancer'; // padrão inicial
+  String tipo = 'freelancer'; // padrão inicial
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _register() async {
-    if (nameController.text.isEmpty ||
-        emailPhoneController.text.isEmpty ||
-        passController.text.isEmpty ||
-        confirmPassController.text.isEmpty ||
-        docController.text.isEmpty) {
+    String email = emailController.text.trim();
+    String senha = passController.text.trim();
+    String nome = nomeController.text.trim();
+    String contato = contatoController.text.trim();
+    String documento = documentoController.text.trim();
+
+    if (email.isEmpty ||
+        senha.isEmpty ||
+        nome.isEmpty ||
+        contato.isEmpty ||
+        documento.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preencha todos os campos!')),
       );
       return;
     }
 
-    // Validação de e-mail ou telefone
-    String input = emailPhoneController.text.trim();
-    bool validEmail = Validators.isValidEmail(input);
-    bool validPhone = Validators.isValidPhone(input);
-
-    if (!validEmail && !validPhone) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Digite um e-mail ou telefone válido!')),
-      );
-      return;
-    }
-
-    if (passController.text != confirmPassController.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('As senhas não coincidem!')));
-      return;
-    }
-
-    if (userType == 'freelancer' &&
-        !Validators.isValidCPF(docController.text)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('CPF inválido!')));
-      return;
-    }
-
-    if (userType == 'estabelecimento' &&
-        !Validators.isValidCNPJ(docController.text)) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('CNPJ inválido!')));
-      return;
-    }
-
     try {
-      // Cria usuário no Firebase Auth
+      // 🔹 Cria usuário no Firebase
       UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: input,
-            password: passController.text.trim(),
+          .createUserWithEmailAndPassword(email: email, password: senha);
+
+      if (!mounted) return;
+
+      if (userCredential.user != null) {
+        String uid = userCredential.user!.uid;
+
+        // 🔹 Salva dados complementares no backend
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:3000/users'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            "uid": uid,
+            "nome": nome,
+            "tipo": tipo,
+            "documento": documento,
+            "contato": contato,
+          }),
+        );
+
+        if (!mounted) return; // ✅ antes de usar context novamente
+
+        if (response.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cadastro realizado com sucesso!')),
           );
 
-      String uid = userCredential.user!.uid;
-
-      // Envia dados complementares para o backend
-      final response = await http.post(
-        Uri.parse('http://10.0.2.2:3000/users'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "uid": uid,
-          "nome": nameController.text,
-          "tipo": userType,
-          "documento": docController.text,
-          "contato": input,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cadastro realizado com sucesso!')),
-        );
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao salvar no backend: ${response.statusCode}'),
-          ),
-        );
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Erro ao salvar no backend: ${response.statusCode}',
+              ),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       String message = 'Erro no cadastro';
       if (e.code == 'email-already-in-use') {
         message = 'E-mail já cadastrado';
-      } else if (e.code == 'invalid-email') {
-        message = 'E-mail inválido';
       } else if (e.code == 'weak-password') {
         message = 'Senha muito fraca';
+      } else if (e.code == 'invalid-email') {
+        message = 'E-mail inválido';
       }
 
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
@@ -142,17 +121,17 @@ class _RegisterPageState extends State<RegisterPage> {
         child: Column(
           children: [
             TextField(
-              controller: nameController,
+              controller: nomeController,
               decoration: const InputDecoration(
-                labelText: 'Nome completo ou Razão Social',
+                labelText: 'Nome',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: emailPhoneController,
+              controller: emailController,
               decoration: const InputDecoration(
-                labelText: 'E-mail ou Telefone',
+                labelText: 'E-mail',
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -168,55 +147,44 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: confirmPassController,
-              obscureText: true,
+              controller: contatoController,
               decoration: const InputDecoration(
-                labelText: 'Confirmar Senha',
+                labelText: 'Telefone/Contato',
                 border: OutlineInputBorder(),
               ),
+              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 20),
             DropdownButtonFormField<String>(
-              initialValue: userType,
+              initialValue: tipo,
               items: const [
                 DropdownMenuItem(
                   value: 'freelancer',
-                  child: Text('Freelancer (CPF)'),
+                  child: Text('Freelancer'),
                 ),
                 DropdownMenuItem(
                   value: 'estabelecimento',
-                  child: Text('Estabelecimento Parceiro (CNPJ)'),
+                  child: Text('Estabelecimento'),
                 ),
               ],
               onChanged: (value) {
                 setState(() {
-                  userType = value!;
-                  docController.clear();
+                  tipo = value!;
                 });
               },
               decoration: const InputDecoration(
-                labelText: 'Tipo de usuário',
+                labelText: 'Tipo de Usuário',
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
             TextField(
-              controller: docController,
+              controller: documentoController,
               decoration: InputDecoration(
-                labelText: userType == 'freelancer' ? 'CPF' : 'CNPJ',
+                labelText: tipo == 'freelancer' ? 'CPF' : 'CNPJ',
                 border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
-              onChanged: (value) {
-                setState(() {
-                  docController.text = userType == 'freelancer'
-                      ? Masks.formatCPF(value)
-                      : Masks.formatCNPJ(value);
-                  docController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: docController.text.length),
-                  );
-                });
-              },
             ),
             const SizedBox(height: 30),
             ElevatedButton(

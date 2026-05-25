@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'welcome_page.dart'; // para voltar ao início
+import 'welcome_page.dart';
+import 'job_page.dart'; // importa a tela de vagas
+import 'estab_profile_page.dart';
+import 'freela_list_page.dart';
 
 class MenuPage extends StatelessWidget {
-  const MenuPage({super.key});
+  final int userId; // ID do estabelecimento logado
+
+  const MenuPage({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +45,12 @@ class MenuPage extends StatelessWidget {
               icon: const Icon(Icons.search),
               label: const Text('Encontrar Freelancer'),
               onPressed: () {
-                // Futuramente: abrir tela de busca de freelancers
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FreelaListPage(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 20),
@@ -48,7 +58,12 @@ class MenuPage extends StatelessWidget {
               icon: const Icon(Icons.work),
               label: const Text('Ofertas de Trabalho'),
               onPressed: () {
-                // Futuramente: abrir tela de ofertas de trabalho
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => JobPage(estabId: userId),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 20),
@@ -56,7 +71,12 @@ class MenuPage extends StatelessWidget {
               icon: const Icon(Icons.business),
               label: const Text('Gerenciar Estabelecimento'),
               onPressed: () {
-                // Futuramente: abrir tela de gerenciamento de bares/restaurantes
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EstabProfilePage(userId: userId),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 20),

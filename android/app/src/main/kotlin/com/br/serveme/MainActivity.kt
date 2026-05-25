@@ -1,4 +1,4 @@
-package com.example.serveme
+package com.br.serveme
 
 import io.flutter.embedding.android.FlutterActivity
 
