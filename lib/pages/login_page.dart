@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'menu_page.dart';
 import 'register_page.dart';
+import 'password_reset_confirmation_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,7 +41,6 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       if (userCredential.user != null) {
-        // 🔹 Chama o backend para buscar dados do usuário
         final response = await http.post(
           Uri.parse('http://10.0.2.2:3000/login'),
           headers: {'Content-Type': 'application/json'},
@@ -86,6 +86,48 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _resetPassword() async {
+    String email = emailPhoneController.text.trim();
+
+    if (email.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Informe seu e-mail para redefinir a senha'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PasswordResetConfirmationPage(email: email),
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message = 'Erro ao enviar e-mail de redefinição';
+      if (e.code == 'user-not-found') {
+        message = 'Usuário não encontrado';
+      } else if (e.code == 'invalid-email') {
+        message = 'E-mail inválido';
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -120,6 +162,11 @@ class _LoginPageState extends State<LoginPage> {
             ElevatedButton(
               onPressed: _validateLogin,
               child: const Text('Entrar'),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: _resetPassword,
+              child: const Text('Esqueci minha senha'),
             ),
             const SizedBox(height: 10),
             TextButton(

@@ -3,9 +3,10 @@ import 'welcome_page.dart';
 import 'job_page.dart'; // importa a tela de vagas
 import 'estab_profile_page.dart';
 import 'freela_list_page.dart';
+import 'delete_account_page.dart'; // importa a tela de exclusão de conta
 
 class MenuPage extends StatelessWidget {
-  final int userId; // ID do estabelecimento logado
+  final int userId; // ID do usuário logado
 
   const MenuPage({super.key, required this.userId});
 
@@ -75,6 +76,20 @@ class MenuPage extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => EstabProfilePage(userId: userId),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Excluir Conta'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DeleteAccountPage(userId: userId),
                   ),
                 );
               },
