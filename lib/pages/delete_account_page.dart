@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'login_page.dart';
 
+// Página onde o usuário pode excluir sua conta. Ela faz uma requisição DELETE para o backend e, se bem-sucedida, também exclui a conta do Firebase Authentication.
 class DeleteAccountPage extends StatefulWidget {
   final int userId; // ID do usuário no backend
   const DeleteAccountPage({super.key, required this.userId});

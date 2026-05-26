@@ -7,6 +7,10 @@ import 'menu_page.dart';
 import 'register_page.dart';
 import 'password_reset_confirmation_page.dart';
 
+import 'freela_home_page.dart';
+import 'estab_home_page.dart';
+
+// Página de login onde o usuário pode entrar usando e-mail ou telefone e senha. Ela valida as credenciais com o Firebase Authentication e, se bem-sucedida, faz uma requisição POST para o backend para obter os dados do usuário e redirecionar para a tela apropriada (freelancer ou estabelecimento).
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -53,11 +57,30 @@ class _LoginPageState extends State<LoginPage> {
           final data = jsonDecode(response.body);
           final user = data['user'];
           final int userId = user['id'];
+          final String tipo = user['tipo']; // <- campo da tabela users
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => MenuPage(userId: userId)),
-          );
+          // Redireciona conforme o tipo
+          if (tipo == 'freelancer') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FreelaHomePage(userId: userId),
+              ),
+            );
+          } else if (tipo == 'estabelecimento') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EstabHomePage(userId: userId),
+              ),
+            );
+          } else {
+            // fallback genérico
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => MenuPage(userId: userId)),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Erro ao validar usuário no backend')),

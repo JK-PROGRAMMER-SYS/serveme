@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 
+// Página de boas-vindas, onde o usuário pode escolher entre entrar ou se cadastrar.
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
 
@@ -21,7 +22,8 @@ class WelcomePage extends StatelessWidget {
               fit: BoxFit.contain,
             ),
             const SizedBox(width: 10),
-            const Text('ServeMe',
+            const Text(
+              'ServeMe',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -83,11 +85,7 @@ class WelcomePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/serveme_logo.png',
-              width: 200,
-              height: 200,
-            ),
+            Image.asset('assets/serveme_logo.png', width: 200, height: 200),
             const SizedBox(height: 20),
             const Text(
               'Bem-vindo ao ServeMe!',

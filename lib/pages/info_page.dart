@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Página que exibe informações sobre o aplicativo, como missão, visão, equipe, etc. Pode ser acessada a partir do menu ou da tela de boas-vindas.
 class InfoPage extends StatelessWidget {
   const InfoPage({super.key});
 

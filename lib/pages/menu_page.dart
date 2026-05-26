@@ -5,6 +5,7 @@ import 'estab_profile_page.dart';
 import 'freela_list_page.dart';
 import 'delete_account_page.dart'; // importa a tela de exclusão de conta
 
+// Página de menu principal para o estabelecimento, onde ele pode acessar as principais funcionalidades como criar vagas, gerenciar perfil, ver freelancers disponíveis, etc.
 class MenuPage extends StatelessWidget {
   final int userId; // ID do usuário logado
 

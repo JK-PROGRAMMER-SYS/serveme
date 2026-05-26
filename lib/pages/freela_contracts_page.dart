@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página onde o freelancer pode ver todos os contratos ativos e passados, com detalhes como nome do estabelecimento, função, datas, status, etc.
 class FreelaContractsPage extends StatefulWidget {
   final int userId; // ID do freelancer logado
   const FreelaContractsPage({super.key, required this.userId});

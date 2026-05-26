@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Página de confirmação de envio de e-mail para redefinição de senha, informando o usuário que um e-mail foi enviado e orientando-o a verificar sua caixa de entrada.
 class PasswordResetConfirmationPage extends StatelessWidget {
   final String email;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página de perfil do freelancer, onde ele pode editar suas informações pessoais e profissionais.
 class FreelaProfilePage extends StatefulWidget {
   final int userId; // ID do freelancer logado
   const FreelaProfilePage({super.key, required this.userId});

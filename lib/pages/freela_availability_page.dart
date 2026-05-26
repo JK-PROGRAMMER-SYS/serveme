@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página onde o freelancer pode atualizar seu status de disponibilidade (disponível ou indisponível) para receber propostas de trabalho.
 class FreelaAvailabilityPage extends StatefulWidget {
   final int userId; // ID do freelancer logado
   const FreelaAvailabilityPage({super.key, required this.userId});

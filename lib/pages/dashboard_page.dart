@@ -8,6 +8,7 @@ import 'freela_availability_page.dart';
 import 'freela_contracts_page.dart';
 import 'estab_contracts_page.dart';
 
+// Página principal do aplicativo, exibida após o login. Mostra opções diferentes para freelancers e estabelecimentos, como acessar perfil, ver contratos, encontrar vagas/freelancers, etc.
 class DashboardPage extends StatelessWidget {
   final Map<String, dynamic> user; // dados do usuário logado
 

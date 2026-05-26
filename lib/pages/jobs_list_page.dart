@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página que exibe uma lista de vagas de trabalho disponíveis para freelancers. O freelancer pode clicar em uma vaga para ver detalhes e aceitar a vaga, o que cria um contrato entre o freelancer e o estabelecimento.
 class JobsListPage extends StatefulWidget {
   const JobsListPage({super.key});
 

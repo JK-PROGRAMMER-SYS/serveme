@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página de perfil do estabelecimento, onde ele pode editar suas informações como CNPJ, endereço, nome fantasia, etc.
 class EstabProfilePage extends StatefulWidget {
   final int userId; // ID do estabelecimento logado
   const EstabProfilePage({super.key, required this.userId});

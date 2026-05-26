@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'login_page.dart';
 
+// Página de registro, onde o usuário pode criar uma nova conta, escolhendo se é freelancer ou estabelecimento, e preenchendo seus dados pessoais.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 

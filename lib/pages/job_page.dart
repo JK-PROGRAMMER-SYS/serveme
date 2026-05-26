@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+// Página onde o estabelecimento pode criar uma nova vaga de trabalho, preenchendo função, valor, datas, etc. Ela faz uma requisição POST para o backend para salvar a vaga.
 class JobPage extends StatefulWidget {
   final int estabId; // ID do estabelecimento logado
   const JobPage({super.key, required this.estabId});
