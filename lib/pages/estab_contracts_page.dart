@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:serveme/pages/contract_details_page.dart';
 
 // Página onde o estabelecimento pode ver todos os contratos ativos e passados, com detalhes como nome do freelancer, função, datas, status, etc.
 class EstabContractsPage extends StatefulWidget {
@@ -81,6 +82,17 @@ class _EstabContractsPageState extends State<EstabContractsPage> {
                       'Fim: ${contrato['data_hora_fim'] ?? '-'}\n'
                       'Status: ${contrato['status']}',
                     ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ContractDetailsPage(
+                            contrato: contrato,
+                            isFreela: false, // mostra nome do freelancer
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

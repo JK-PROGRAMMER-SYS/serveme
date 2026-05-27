@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-// Página onde o estabelecimento pode criar uma nova vaga de trabalho, preenchendo função, valor, datas, etc. Ela faz uma requisição POST para o backend para salvar a vaga.
-class JobPage extends StatefulWidget {
+// Página onde o estabelecimento pode criar uma nova vaga de trabalho
+class EstabJobsPage extends StatefulWidget {
   final int estabId; // ID do estabelecimento logado
-  const JobPage({super.key, required this.estabId});
+  const EstabJobsPage({super.key, required this.estabId});
 
   @override
-  State<JobPage> createState() => _JobPageState();
+  State<EstabJobsPage> createState() => _EstabJobsPageState();
 }
 
-class _JobPageState extends State<JobPage> {
+class _EstabJobsPageState extends State<EstabJobsPage> {
   final TextEditingController funcaoController = TextEditingController();
   final TextEditingController valorController = TextEditingController();
   DateTime? inicio;
@@ -22,7 +22,6 @@ class _JobPageState extends State<JobPage> {
         valorController.text.isEmpty ||
         inicio == null ||
         fim == null) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preencha todos os campos!')),
       );
@@ -34,23 +33,23 @@ class _JobPageState extends State<JobPage> {
         Uri.parse('http://10.0.2.2:3000/jobs'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          "estabelecimento_id": widget.estabId,
+          "estab_id": widget.estabId, // campo correto no BD
           "funcao": funcaoController.text,
           "data_hora_inicio": inicio!.toIso8601String(),
           "data_hora_fim": fim!.toIso8601String(),
           "valor": double.parse(valorController.text),
+          "status": "aberta", // garante status inicial
         }),
       );
 
-      if (!mounted) return; // ✅ protege contra uso de context após await
-
       if (response.statusCode == 200) {
+        if (!mounted) return; // ✅ protege antes do Navigator
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vaga criada com sucesso!')),
         );
-        if (!mounted) return; // ✅ protege antes do Navigator
-        Navigator.pop(context);
+        Navigator.pop(context); // volta para tela anterior
       } else {
+        if (!mounted) return; // ✅ protege antes de usar context
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao salvar vaga: ${response.statusCode}'),
@@ -58,7 +57,6 @@ class _JobPageState extends State<JobPage> {
         );
       }
     } catch (e) {
-      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
@@ -66,7 +64,6 @@ class _JobPageState extends State<JobPage> {
   }
 
   Future<void> _selecionarDataHora(bool inicioFlag) async {
-    if (!mounted) return; // ✅ protege antes de usar context
     final date = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -74,12 +71,12 @@ class _JobPageState extends State<JobPage> {
       lastDate: DateTime(2030),
     );
     if (date == null) return;
-
     if (!mounted) return; // ✅ protege antes de usar context
     final time = await showTimePicker(
       context: context,
       initialTime: const TimeOfDay(hour: 18, minute: 0),
     );
+
     if (time == null) return;
 
     final selected = DateTime(
@@ -90,7 +87,6 @@ class _JobPageState extends State<JobPage> {
       time.minute,
     );
 
-    if (!mounted) return; // ✅ protege antes de setState
     setState(() {
       if (inicioFlag) {
         inicio = selected;

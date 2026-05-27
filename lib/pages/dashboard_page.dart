@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_page.dart';
-import 'job_page.dart';
-import 'jobs_list_page.dart';
+import 'estab_jobs_page.dart';
+import 'freela_jobs_page.dart';
 import 'estab_profile_page.dart';
 import 'freela_profile_page.dart';
 import 'freela_availability_page.dart';
@@ -51,7 +51,7 @@ class DashboardPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => JobPage(estabId: userId),
+                      builder: (context) => EstabJobsPage(estabId: userId),
                     ),
                   );
                 },
@@ -94,7 +94,7 @@ class DashboardPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const JobsListPage(),
+                      builder: (context) => FreelaJobsPage(freelaId: userId),
                     ),
                   );
                 },

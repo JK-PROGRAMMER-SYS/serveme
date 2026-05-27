@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-// Página que exibe uma lista de vagas de trabalho disponíveis para freelancers. O freelancer pode clicar em uma vaga para ver detalhes e aceitar a vaga, o que cria um contrato entre o freelancer e o estabelecimento.
-class JobsListPage extends StatefulWidget {
-  const JobsListPage({super.key});
+// Página que exibe uma lista de vagas abertas para freelancers.
+// O freelancer pode clicar em uma vaga para aceitar e criar um contrato.
+class FreelaJobsPage extends StatefulWidget {
+  final int freelaId; // ID do freelancer logado
+
+  const FreelaJobsPage({super.key, required this.freelaId});
 
   @override
-  State<JobsListPage> createState() => _JobsListPageState();
+  State<FreelaJobsPage> createState() => _FreelaJobsPageState();
 }
 
-class _JobsListPageState extends State<JobsListPage> {
+class _FreelaJobsPageState extends State<FreelaJobsPage> {
   List<dynamic> jobs = [];
   bool loading = true;
 
@@ -22,18 +25,18 @@ class _JobsListPageState extends State<JobsListPage> {
 
   Future<void> _fetchJobs() async {
     try {
-      final response = await http.get(Uri.parse('http://10.0.2.2:3000/jobs'));
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:3000/jobs/list'),
+      );
       if (response.statusCode == 200) {
-        if (!mounted) return; // ✅ protege aqui
+        if (!mounted) return;
         setState(() {
           jobs = jsonDecode(response.body);
           loading = false;
         });
       } else {
-        if (!mounted) return; // ✅ protege aqui
-        setState(() {
-          loading = false;
-        });
+        if (!mounted) return;
+        setState(() => loading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao carregar vagas: ${response.statusCode}'),
@@ -41,25 +44,23 @@ class _JobsListPageState extends State<JobsListPage> {
         );
       }
     } catch (e) {
-      if (!mounted) return; // ✅ protege aqui também
-      setState(() {
-        loading = false;
-      });
+      if (!mounted) return;
+      setState(() => loading = false);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
     }
   }
 
-  Future<void> _aceitarVaga(int jobId, int freelaId) async {
+  Future<void> _aceitarVaga(int jobId) async {
     try {
       final response = await http.post(
         Uri.parse('http://10.0.2.2:3000/contracts'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"job_id": jobId, "freela_id": freelaId}),
+        body: jsonEncode({"job_id": jobId, "freela_id": widget.freelaId}),
       );
 
-      if (!mounted) return; // ✅ protege aqui
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -74,7 +75,7 @@ class _JobsListPageState extends State<JobsListPage> {
         );
       }
     } catch (e) {
-      if (!mounted) return; // ✅ protege aqui também
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erro inesperado: $e')));
@@ -100,14 +101,14 @@ class _JobsListPageState extends State<JobsListPage> {
                 return Card(
                   margin: const EdgeInsets.all(8),
                   child: ListTile(
-                    title: Text('${job['funcao']} - R\$${job['valor']}'),
+                    title: Text('${job['funcao']} - ${job['estab_nome']}'),
                     subtitle: Text(
-                      'Início: ${job['data_hora_inicio']}\nFim: ${job['data_hora_fim']}',
+                      'Início: ${job['data_hora_inicio']}\n'
+                      'Fim: ${job['data_hora_fim']}\n'
+                      'Valor: R\$${job['valor']}',
                     ),
                     trailing: ElevatedButton(
-                      onPressed: () {
-                        _aceitarVaga(job['id'], 1); // exemplo: freelaId fixo
-                      },
+                      onPressed: () => _aceitarVaga(job['id']),
                       child: const Text('Aceitar'),
                     ),
                   ),

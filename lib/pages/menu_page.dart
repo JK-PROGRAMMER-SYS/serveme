@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'welcome_page.dart';
-import 'job_page.dart'; // importa a tela de vagas
+import 'estab_jobs_page.dart'; // importa a tela de vagas
 import 'estab_profile_page.dart';
 import 'freela_list_page.dart';
 import 'delete_account_page.dart'; // importa a tela de exclusão de conta
@@ -63,7 +63,7 @@ class MenuPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => JobPage(estabId: userId),
+                    builder: (context) => EstabJobsPage(estabId: userId),
                   ),
                 );
               },
